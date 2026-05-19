@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}MoodFlow — Live Recommendations{% endblock %}
+{% block head %}
+<style>
+  .hero{min-height:calc(100vh - 62px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px;position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 55% at 50% 25%,rgba(192,132,252,0.14) 0%,transparent 65%),radial-gradient(ellipse 45% 40% at 85% 75%,rgba(244,114,182,0.09) 0%,transparent 55%),radial-gradient(ellipse 45% 40% at 15% 65%,rgba(56,189,248,0.07) 0%,transparent 55%);}
+  .badge{display:inline-flex;align-items:center;gap:7px;padding:6px 18px;border-radius:30px;margin-bottom:28px;border:1px solid rgba(192,132,252,0.35);background:rgba(192,132,252,0.07);font-size:0.75rem;color:var(--a1);letter-spacing:2px;text-transform:uppercase;animation:fadeUp 0.5s ease both;}
+  .hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,7vw,5.5rem);line-height:1.1;font-weight:700;margin-bottom:22px;animation:fadeUp 0.5s ease 0.1s both;}
+  .hero h1 em{font-style:italic;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero-sub{color:var(--muted);font-size:1.1rem;max-width:510px;line-height:1.75;margin-bottom:44px;animation:fadeUp 0.5s ease 0.2s both;}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.5s ease 0.3s both;}
+  .btn-p{padding:15px 36px;border-radius:50px;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:1rem;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.25s;box-shadow:0 8px 28px rgba(192,132,252,0.3);display:inline-block;}
+  .btn-p:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(192,132,252,0.42);}
+  .btn-g{padding:15px 36px;border-radius:50px;background:transparent;color:var(--text);border:1px solid var(--border2);cursor:pointer;font-size:1rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:inline-block;}
+  .btn-g:hover{background:var(--card2);}
+  .pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:56px;animation:fadeUp 0.5s ease 0.45s both;}
+  .pill{padding:9px 20px;border-radius:50px;background:var(--card);border:1px solid var(--border);font-size:0.87rem;color:var(--muted);transition:all 0.2s;}
+  .pill:hover{border-color:var(--a1);color:var(--text);background:rgba(192,132,252,0.07);}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;max-width:920px;margin:76px auto 30px;padding:0 24px;animation:fadeUp 0.5s ease 0.5s both;}
+  .feat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px 22px;transition:border-color 0.2s;}
+  .feat:hover{border-color:var(--border2);}
+  .feat-icon{font-size:1.8rem;margin-bottom:13px;}
+  .feat-title{font-weight:600;margin-bottom:7px;}
+  .feat-desc{color:var(--muted);font-size:0.85rem;line-height:1.65;}
+  .api-strip{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 24px 80px;animation:fadeUp 0.5s ease 0.6s both;}
+  .api-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:30px;font-size:0.79rem;border:1px solid var(--border);background:var(--card);color:var(--muted);}
+  .api-chip .dot{width:8px;height:8px;border-radius:50%;background:#444;flex-shrink:0;}
+</style>
+{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="badge">✦ Live · Spotify · TMDB Movies & TV</div>
+  <h1>Stop scrolling.<br>Start <em>feeling</em>.</h1>
+  <p class="hero-sub">Tell us your mood. We fetch real Spotify playlists, TMDB movies and TV shows — all curated live for your evening.</p>
+  <div class="hero-cta">
+    <a href="/register" class="btn-p">Begin Your Flow →</a>
+    <a href="/login" class="btn-g">I have an account</a>
+  </div>
+  <div class="pills">
+    <div class="pill">😄 Happy</div><div class="pill">😔 Sad</div>
+    <div class="pill">🤩 Excited</div><div class="pill">😎 Chill</div>
+    <div class="pill">💕 Romantic</div><div class="pill">😰 Anxious</div>
+    <div class="pill">😑 Bored</div><div class="pill">⚡ Energetic</div>
+  </div>
+</section>
+<div class="features">
+  <div class="feat"><div class="feat-icon">🎬</div><div class="feat-title">Live Movies</div><div class="feat-desc">Real posters, ratings & vote counts from TMDB — matched to your mood.</div></div>
+  <div class="feat"><div class="feat-icon">📺</div><div class="feat-title">TV Shows</div><div class="feat-desc">Binge-worthy shows with season count, ratings, and direct TMDB links.</div></div>
+  <div class="feat"><div class="feat-icon">🎵</div><div class="feat-title">Real Spotify Playlists</div><div class="feat-desc">Actual playlists — one click and they open straight in Spotify.</div></div>
+  <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">REST API</div><div class="feat-desc">Full JSON API at <code style="color:var(--a1)">/api/v1/</code> — build your own integrations.</div></div>
+</div>
+<div class="api-strip">
+  <div class="api-chip"><span class="dot" id="sp-dot"></span><span id="sp-txt">Spotify</span></div>
+  <div class="api-chip"><span class="dot" id="tm-dot"></span><span id="tm-txt">TMDB</span></div>
+</div>
+<script>
+  fetch('/api/v1/status').then(r=>r.json()).then(d=>{
+    if(d.spotify){document.getElementById('sp-dot').style.cssText='background:#1db954;box-shadow:0 0 6px #1db954';document.getElementById('sp-txt').textContent='Spotify ✓';}
+    else document.getElementById('sp-txt').textContent='Spotify (add key in .env)';
+    if(d.tmdb){document.getElementById('tm-dot').style.cssText='background:#01b4e4;box-shadow:0 0 6px #01b4e4';document.getElementById('tm-txt').textContent='TMDB ✓';}
+    else document.getElementById('tm-txt').textContent='TMDB (add key in .env)';
+  }).catch(()=>{});
+</script>
+{% endblock %}

@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+{% block title %}Your Flow — MoodFlow{% endblock %}
+{% block head %}
+<style>
+  .page{padding:44px 24px 100px;max-width:1140px;margin:0 auto;}
+  .step{display:none;}
+  .step.active{display:block;animation:fadeUp 0.4s ease both;}
+  .step-tag{font-size:0.73rem;color:var(--a1);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+  .step-title{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,4vw,2.8rem);line-height:1.2;margin-bottom:10px;}
+  .step-sub{color:var(--muted);font-size:0.95rem;margin-bottom:36px;}
+  .progress{display:flex;gap:7px;margin-bottom:38px;max-width:175px;}
+  .pd{height:4px;border-radius:4px;background:var(--card2);flex:1;transition:background 0.3s;}
+  .pd.on{background:linear-gradient(90deg,var(--a1),var(--a2));}
+  .mood-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:11px;}
+  .mood-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:22px 15px;text-align:center;cursor:pointer;transition:all 0.22s;position:relative;}
+  .mood-card:hover{border-color:rgba(192,132,252,0.45);transform:translateY(-3px);}
+  .mood-card.sel{border-color:var(--a1);background:rgba(192,132,252,0.09);box-shadow:0 0 26px rgba(192,132,252,0.18);}
+  .mood-card .ck{position:absolute;top:9px;right:10px;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:0.65rem;opacity:0;transform:scale(0);transition:all 0.2s;}
+  .mood-card.sel .ck{opacity:1;transform:scale(1);}
+  .m-emoji{font-size:2rem;margin-bottom:9px;display:block;}
+  .m-name{font-weight:600;font-size:0.88rem;}
+  .m-vibe{color:var(--muted);font-size:0.73rem;margin-top:4px;}
+  .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:500px;}
+  .loc-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:34px 22px;text-align:center;cursor:pointer;transition:all 0.22s;position:relative;}
+  .loc-card:hover{border-color:rgba(56,189,248,0.45);transform:translateY(-3px);}
+  .loc-card.sel{border-color:var(--a3);background:rgba(56,189,248,0.07);box-shadow:0 0 24px rgba(56,189,248,0.15);}
+  .loc-card .ck{position:absolute;top:11px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--a3);display:flex;align-items:center;justify-content:center;font-size:0.68rem;opacity:0;transform:scale(0);transition:all 0.2s;}
+  .loc-card.sel .ck{opacity:1;transform:scale(1);}
+  .l-emoji{font-size:2.5rem;margin-bottom:12px;display:block;}
+  .l-name{font-size:1.04rem;font-weight:600;}
+  .l-desc{color:var(--muted);font-size:0.81rem;margin-top:5px;}
+  .next-btn{margin-top:32px;padding:14px 36px;border-radius:50px;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:0.96rem;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.25s;display:none;box-shadow:0 8px 26px rgba(192,132,252,0.3);}
+  .next-btn.show{display:inline-block;animation:fadeUp 0.3s ease both;}
+  .next-btn:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(192,132,252,0.42);}
+  .back-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.87rem;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;margin-bottom:24px;transition:color 0.2s;padding:0;}
+  .back-btn:hover{color:var(--text);}
+  .spin-wrap{text-align:center;padding:80px 20px;}
+  .spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--border2);border-top-color:var(--a1);animation:spin 0.75s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .load-steps{display:flex;flex-direction:column;gap:8px;margin-top:20px;align-items:center;}
+  .load-step{font-size:0.83rem;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .load-step .dot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+  .load-step.done .dot{background:var(--a4);}
+  .load-step.active .dot{background:var(--a1);animation:pulse 0.8s ease infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .res-head{margin-bottom:24px;}
+  .res-title{font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:5px;}
+  .res-meta{color:var(--muted);font-size:0.86rem;}
+  .api-bar{display:flex;gap:9px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+  .api-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:0.73rem;border:1px solid var(--border);background:var(--card2);color:var(--muted);}
+  .api-tag .d{width:7px;height:7px;border-radius:50%;background:#444;flex-shrink:0;}
+  .api-tag.live{color:var(--text);}
+  .api-tag.live .d{background:var(--a4);box-shadow:0 0 5px var(--a4);}
+  .tabs{display:flex;gap:3px;margin-bottom:26px;border-bottom:1px solid var(--border);overflow-x:auto;}
+  .tab{padding:10px 18px;border-radius:10px 10px 0 0;font-size:0.86rem;cursor:pointer;color:var(--muted);transition:all 0.2s;border:none;background:none;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+  .tab:hover{color:var(--text);}
+  .tab.on{color:var(--text);border-bottom-color:var(--a1);font-weight:600;}
+  .tab-count{display:inline-block;background:var(--card2);border-radius:20px;padding:1px 8px;font-size:0.7rem;margin-left:5px;color:var(--muted);}
+  .section{display:none;}
+  .section.on{display:block;animation:fadeUp 0.35s ease both;}
+  .no-api{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.22);border-radius:12px;padding:16px 20px;font-size:0.85rem;color:#fbbf24;margin-bottom:18px;line-height:1.65;}
+  .no-api code{background:rgba(251,191,36,0.15);padding:2px 6px;border-radius:5px;}
+  .no-api a{color:#fbbf24;text-decoration:underline;}
+  .empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty-state .ei{font-size:2.4rem;display:block;margin-bottom:11px;}
+  .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px;}
+  .media-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all 0.22s;}
+  .media-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.5);}
+  .media-poster{width:100%;aspect-ratio:2/3;object-fit:cover;background:var(--card2);}
+  .media-poster-ph{width:100%;aspect-ratio:2/3;background:linear-gradient(135deg,var(--card2),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:2.4rem;}
+  .media-body{padding:11px 12px;}
+  .media-title{font-weight:600;font-size:0.84rem;line-height:1.3;margin-bottom:5px;}
+  .media-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .media-rating{font-size:0.77rem;color:#fbbf24;font-weight:600;}
+  .media-year{font-size:0.73rem;color:var(--muted);}
+  .media-votes{font-size:0.71rem;color:var(--muted);margin-bottom:7px;}
+  .media-overview{font-size:0.73rem;color:var(--muted);line-height:1.55;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .media-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;}
+  .tmdb-link{font-size:0.71rem;color:var(--a3);white-space:nowrap;}
+  .tmdb-link:hover{text-decoration:underline;}
+  .tv-badge{font-size:0.66rem;color:var(--a4);background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);padding:2px 7px;border-radius:10px;white-space:nowrap;}
+  .playlist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:15px;}
+  .pl-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all 0.22s;}
+  .pl-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.4);}
+  .pl-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--card2);}
+  .pl-img-ph{width:100%;aspect-ratio:1;background:linear-gradient(135deg,#0f2d17,#1db954);display:flex;align-items:center;justify-content:center;font-size:2.2rem;}
+  .pl-body{padding:12px;}
+  .pl-name{font-weight:600;font-size:0.85rem;margin-bottom:4px;line-height:1.3;}
+  .pl-sub{font-size:0.74rem;color:var(--muted);margin-bottom:8px;}
+  .pl-desc{font-size:0.72rem;color:var(--muted);line-height:1.55;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .pl-foot{display:flex;align-items:center;justify-content:space-between;}
+  .sp-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:#1db954;border-radius:20px;font-size:0.72rem;font-weight:700;color:#000;transition:all 0.2s;}
+  .sp-btn:hover{background:#1ed760;transform:scale(1.04);}
+  .act-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px;}
+  .act-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all 0.22s;}
+  .act-card:hover{border-color:var(--border2);transform:translateY(-3px);}
+  .act-emoji{font-size:1.8rem;margin-bottom:9px;display:block;}
+  .act-cat{font-size:0.68rem;color:var(--a1);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;}
+  .act-title{font-weight:600;font-size:0.93rem;margin-bottom:6px;}
+  .act-desc{color:var(--muted);font-size:0.82rem;line-height:1.6;}
+  .save-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--muted);cursor:pointer;font-size:0.72rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap;flex-shrink:0;}
+  .save-btn:hover{border-color:var(--a2);color:var(--a2);}
+  .save-btn.on{border-color:var(--a2);color:var(--a2);background:rgba(244,114,182,0.08);}
+  .save-btn:disabled{opacity:0.5;cursor:not-allowed;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <!-- STEP 1: MOOD -->
+  <div class="step active" id="s1">
+    <div class="progress"><div class="pd on"></div><div class="pd"></div></div>
+    <div class="step-tag">Step 1 of 2</div>
+    <h1 class="step-title">How are you feeling<br>right now?</h1>
+    <p class="step-sub">Pick the mood that matches your current vibe.</p>
+    <div class="mood-grid">
+      {% for v,e,n,d in [('happy','😄','Happy','Joyful & upbeat'),('sad','😔','Sad','Need comfort'),('excited','🤩','Excited','Full of energy'),('chill','😎','Chill','Low-key vibes'),('romantic','💕','Romantic','Soft & loving'),('anxious','😰','Anxious','Need to calm down'),('bored','😑','Bored','Needs stimulation'),('energetic','⚡','Energetic','Ready to move')] %}
+      <div class="mood-card" data-mood="{{v}}" onclick="pickMood(this)">
+        <div class="ck">✓</div>
+        <span class="m-emoji">{{e}}</span>
+        <div class="m-name">{{n}}</div>
+        <div class="m-vibe">{{d}}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="next-btn" id="nb1" onclick="goS2()">Continue →</button>
+  </div>
+
+  <!-- STEP 2: LOCATION -->
+  <div class="step" id="s2">
+    <button class="back-btn" onclick="goS1()">← Back</button>
+    <div class="progress"><div class="pd on"></div><div class="pd on"></div></div>
+    <div class="step-tag">Step 2 of 2</div>
+    <h1 class="step-title">Where do you want<br>to be tonight?</h1>
+    <p class="step-sub">Choose your setting for the evening.</p>
+    <div class="loc-grid">
+      <div class="loc-card" data-loc="stay_in" onclick="pickLoc(this)">
+        <div class="ck">✓</div><span class="l-emoji">🏠</span>
+        <div class="l-name">Stay In</div><div class="l-desc">Cosy, home-based plans</div>
+      </div>
+      <div class="loc-card" data-loc="go_out" onclick="pickLoc(this)">
+        <div class="ck">✓</div><span class="l-emoji">🌆</span>
+        <div class="l-name">Go Out</div><div class="l-desc">Explore the city tonight</div>
+      </div>
+    </div>
+    <button class="next-btn" id="nb2" onclick="fetchAll()">Show My Flow ✦</button>
+  </div>
+
+  <!-- STEP 3: LOADING -->
+  <div class="step" id="s3">
+    <div class="spin-wrap">
+      <div class="spinner"></div>
+      <p style="color:var(--muted);font-size:0.95rem">Fetching your personalised flow…</p>
+      <div class="load-steps">
+        <div class="load-step" id="ls-movies"><span class="dot"></span>Movies from TMDB</div>
+        <div class="load-step" id="ls-tv"><span class="dot"></span>TV Shows from TMDB</div>
+        <div class="load-step" id="ls-spotify"><span class="dot"></span>Playlists from Spotify</div>
+        <div class="load-step" id="ls-act"><span class="dot"></span>Activities</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: RESULTS -->
+  <div class="step" id="s4">
+    <button class="back-btn" onclick="goS1()">← Start Over</button>
+    <div class="res-head">
+      <h1 class="res-title" id="rTitle">Your Evening Flow</h1>
+      <p class="res-meta" id="rMeta"></p>
+    </div>
+    <div class="api-bar" id="apiBar"></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="movies"     onclick="switchTab(this)">🎬 Movies     <span class="tab-count" id="tc-movies">0</span></button>
+      <button class="tab"    data-tab="tv"          onclick="switchTab(this)">📺 TV Shows   <span class="tab-count" id="tc-tv">0</span></button>
+      <button class="tab"    data-tab="playlists"   onclick="switchTab(this)">🎵 Playlists  <span class="tab-count" id="tc-playlists">0</span></button>
+      <button class="tab"    data-tab="activities"  onclick="switchTab(this)">🎯 Activities <span class="tab-count" id="tc-activities">0</span></button>
+    </div>
+    <div class="section on" id="tab-movies">    <div class="media-grid"    id="movieGrid"></div></div>
+    <div class="section"    id="tab-tv">        <div class="media-grid"    id="tvGrid"></div></div>
+    <div class="section"    id="tab-playlists"> <div class="playlist-grid" id="playlistGrid"></div></div>
+    <div class="section"    id="tab-activities"><div class="act-grid"       id="actGrid"></div></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let selMood = null, selLoc = null;
+
+// Store item metadata in a JS Map keyed by "type::id"
+// This is the core fix: avoids all quote/apostrophe/special-char bugs
+// that happen when you embed JSON.stringify() inside onclick="..." attributes
+const itemStore = new Map();
+
+function storeItem(type, id, data) {
+  itemStore.set(type + '::' + id, { type: type, id: id, ...data });
+}
+function getItem(type, id) {
+  return itemStore.get(type + '::' + id) || null;
+}
+
+// ─── LABELS ───────────────────────────────────────────────────────────────────
+const MOOD_LABELS = {
+  happy:'Happy 😄', sad:'Sad 😔', excited:'Excited 🤩', chill:'Chill 😎',
+  romantic:'Romantic 💕', anxious:'Anxious 😰', bored:'Bored 😑', energetic:'Energetic ⚡'
+};
+const LOC_LABELS  = { stay_in:'Staying In 🏠', go_out:'Going Out 🌆' };
+const CAT_LABELS  = { food:'Food', game:'Game', activity:'Activity', outdoor:'Outdoor', restaurant:'Restaurant' };
+const SP_ICON     = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+
+// ─── STEP NAVIGATION ──────────────────────────────────────────────────────────
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function pickMood(el) {
+  document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  selMood = el.dataset.mood;
+  document.getElementById('nb1').classList.add('show');
+}
+function pickLoc(el) {
+  document.querySelectorAll('.loc-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  selLoc = el.dataset.loc;
+  document.getElementById('nb2').classList.add('show');
+}
+function goS1() { selLoc = null; showStep(1); }
+function goS2() { if (selMood) showStep(2); }
+
+function switchTab(el) {
+  const name = el.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('tab-' + name).classList.add('on');
+}
+
+function setLS(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('done', 'active');
+  if (state) el.classList.add(state);
+}
+
+// ─── FETCH ────────────────────────────────────────────────────────────────────
+async function fetchAll() {
+  if (!selMood || !selLoc) return;
+  showStep(3);
+  itemStore.clear();
+
+  setTimeout(() => setLS('ls-movies',  'active'), 100);
+  setTimeout(() => { setLS('ls-movies', 'done'); setLS('ls-tv',      'active'); }, 900);
+  setTimeout(() => { setLS('ls-tv',     'done'); setLS('ls-spotify', 'active'); }, 1700);
+  setTimeout(() => { setLS('ls-spotify','done'); setLS('ls-act',     'active'); }, 2400);
+
+  try {
+    const r = await fetch('/api/v1/recommendations?mood=' + selMood + '&location=' + selLoc);
+    if (r.status === 401) {
+      showToast('Session expired — redirecting to login…', '#f87171');
+      setTimeout(() => window.location.href = '/login', 1500);
+      return;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    setLS('ls-act', 'done');
+    setTimeout(() => { renderResults(d); showStep(4); }, 400);
+  } catch (e) {
+    console.error(e);
+    showToast('Something went wrong. Please try again.', '#f87171');
+    showStep(2);
+  }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderResults(d) {
+  document.getElementById('rTitle').textContent = 'Your ' + (MOOD_LABELS[d.mood] || d.mood) + ' Evening';
+  document.getElementById('rMeta').textContent  = 'Live data · ' + (LOC_LABELS[d.location] || d.location);
+  document.getElementById('apiBar').innerHTML   =
+    '<div class="api-tag ' + (d.has_tmdb    ? 'live' : '') + '"><span class="d"></span>TMDB '    + (d.has_tmdb    ? '✓' : '— add key in .env') + '</div>' +
+    '<div class="api-tag ' + (d.has_spotify ? 'live' : '') + '"><span class="d"></span>Spotify ' + (d.has_spotify ? '✓' : '— add key in .env') + '</div>';
+
+  document.getElementById('tc-movies').textContent     = d.movies.length;
+  document.getElementById('tc-tv').textContent         = d.tvshows.length;
+  document.getElementById('tc-playlists').textContent  = d.playlists.length;
+  document.getElementById('tc-activities').textContent = d.activities.length;
+
+  // Warn if TMDB key is set but returned 0 results (wrong key / network issue)
+  if (d.has_tmdb && d.movies.length === 0 && d.tvshows.length === 0) {
+    document.getElementById('apiBar').innerHTML +=
+      '<div style="width:100%;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);' +
+      'border-radius:10px;padding:10px 16px;font-size:0.82rem;color:#f87171;margin-top:4px">' +
+      '⚠ TMDB key is set but returned no results. ' +
+      'Visit <a href="/api/v1/test-tmdb" target="_blank" style="color:#f87171;text-decoration:underline">/api/v1/test-tmdb</a> ' +
+      'to check if your key is valid, then restart the app.</div>';
+  }
+
+  renderMediaGrid('movieGrid',    d.movies,     d.has_tmdb,    'movie',    '🎬', 'No movies found.');
+  renderMediaGrid('tvGrid',       d.tvshows,    d.has_tmdb,    'tvshow',   '📺', 'No TV shows found.');
+  renderPlaylists(d.playlists, d.has_spotify);
+  renderActivities(d.activities);
+
+  // Auto-select first non-empty tab
+  const order = ['movies','tv','playlists','activities'];
+  const counts = { movies: d.movies.length, tv: d.tvshows.length, playlists: d.playlists.length, activities: d.activities.length };
+  const first = order.find(k => counts[k] > 0) || 'movies';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('on'));
+  document.querySelector('.tab[data-tab="' + first + '"]').classList.add('on');
+  document.getElementById('tab-' + first).classList.add('on');
+}
+
+function renderMediaGrid(gridId, items, hasApi, type, ph, emptyMsg) {
+  const g = document.getElementById(gridId);
+  if (!hasApi) {
+    g.innerHTML = `<div style="grid-column:1/-1;background:var(--card2);border:1px solid var(--border2);border-radius:16px;padding:28px 24px;max-width:560px;">
+      <div style="font-size:1.8rem;margin-bottom:12px">${ph}</div>
+      <div style="font-weight:600;font-size:1rem;margin-bottom:8px">TMDB API key not found</div>
+      <div style="color:var(--muted);font-size:0.87rem;line-height:1.7;margin-bottom:16px">
+        To show live movies and TV shows, add your free TMDB key to the <code style="background:rgba(255,255,255,0.08);padding:2px 7px;border-radius:5px">.env</code> file in your project folder.
+      </div>
+      <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:14px 16px;font-family:monospace;font-size:0.82rem;color:#a3e635;margin-bottom:16px;line-height:1.8">
+        # In your .env file:<br>
+        TMDB_API_KEY=paste_your_key_here
+      </div>
+      <div style="color:var(--muted);font-size:0.83rem;margin-bottom:16px">
+        1. Go to <a href="https://www.themoviedb.org/signup" target="_blank" style="color:var(--a3)">themoviedb.org/signup</a> (free)<br>
+        2. Verify your email → Settings → API → Create → Developer<br>
+        3. Copy <strong>API Key (v3 auth)</strong> and paste it in <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">.env</code><br>
+        4. Restart the app: <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">python app.py</code>
+      </div>
+      <button onclick="testTmdbKey()" style="padding:9px 20px;border-radius:8px;background:var(--a3);color:#000;border:none;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;font-size:0.85rem" id="tmdb-test-btn">
+        Test my TMDB key
+      </button>
+      <span id="tmdb-test-result" style="margin-left:12px;font-size:0.83rem;color:var(--muted)"></span>
+    </div>`;
+    return;
+  }
+  if (!items.length) { g.innerHTML = '<div class="empty-state"><span class="ei">' + ph + '</span><p>' + emptyMsg + '</p></div>'; return; }
+
+  const isTv = (type === 'tvshow');
+  g.innerHTML = items.map(function(m, i) {
+    // Store in Map — safe for any characters in title/subtitle/url
+    storeItem(type, m.id, { title: m.title, subtitle: m.subtitle, image: m.image, url: m.url });
+    return '<div class="media-card fade-up" style="animation-delay:' + (i * 40) + 'ms">' +
+      (m.image ? '<img class="media-poster" src="' + m.image + '" alt="" loading="lazy"/>'
+               : '<div class="media-poster-ph">' + ph + '</div>') +
+      '<div class="media-body">' +
+        '<div class="media-title">' + esc(m.title) + '</div>' +
+        '<div class="media-row"><span class="media-rating">★ ' + m.rating + '/10</span><span class="media-year">' + (m.year || '') + '</span></div>' +
+        '<div class="media-votes">' + (m.votes || 0).toLocaleString() + ' votes</div>' +
+        (m.overview ? '<div class="media-overview">' + esc(m.overview) + '</div>' : '') +
+        '<div class="media-foot">' +
+          '<a class="tmdb-link" href="' + m.url + '" target="_blank">' + (isTv ? 'TV' : 'Movie') + ' ↗</a>' +
+          (isTv ? '<span class="tv-badge">Series</span>' : '') +
+          '<button class="save-btn ' + (m.saved ? 'on' : '') + '" data-type="' + type + '" data-id="' + m.id + '" onclick="toggleSave(this)">' +
+            (m.saved ? '✦ Saved' : '+ Save') +
+          '</button>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function renderPlaylists(playlists, hasApi) {
+  const g = document.getElementById('playlistGrid');
+  if (!hasApi) {
+    g.innerHTML = '<div class="no-api" style="grid-column:1/-1">🎵 <strong>Spotify not configured.</strong> ' +
+      'Add <code>SPOTIFY_CLIENT_ID</code> and <code>SPOTIFY_CLIENT_SECRET</code> to your <code>.env</code> file. ' +
+      'Get free credentials at <a href="https://developer.spotify.com/dashboard" target="_blank">developer.spotify.com/dashboard</a></div>';
+    return;
+  }
+  if (!playlists.length) { g.innerHTML = '<div class="empty-state"><span class="ei">🎵</span><p>No playlists found.</p></div>'; return; }
+
+  g.innerHTML = playlists.map(function(p, i) {
+    storeItem('playlist', p.id, { title: p.title, subtitle: p.subtitle, image: p.image, url: p.url });
+    return '<div class="pl-card fade-up" style="animation-delay:' + (i * 40) + 'ms">' +
+      (p.image ? '<img class="pl-img" src="' + p.image + '" alt="" loading="lazy"/>'
+               : '<div class="pl-img-ph">🎵</div>') +
+      '<div class="pl-body">' +
+        '<div class="pl-name">' + esc(p.title) + '</div>' +
+        '<div class="pl-sub">' + esc(p.subtitle) + '</div>' +
+        (p.desc ? '<div class="pl-desc">' + esc(p.desc) + '</div>' : '') +
+        '<div class="pl-foot">' +
+          '<a class="sp-btn" href="' + p.url + '" target="_blank">' + SP_ICON + ' Open</a>' +
+          '<button class="save-btn ' + (p.saved ? 'on' : '') + '" data-type="playlist" data-id="' + p.id + '" onclick="toggleSave(this)">' +
+            (p.saved ? '✦ Saved' : '+ Save') +
+          '</button>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function renderActivities(acts) {
+  const g = document.getElementById('actGrid');
+  if (!acts.length) { g.innerHTML = '<div class="empty-state"><span class="ei">🎯</span><p>No activities found.</p></div>'; return; }
+
+  g.innerHTML = acts.map(function(a, i) {
+    storeItem('activity', a.id, { title: a.title, subtitle: a.category, image: '', url: '' });
+    return '<div class="act-card fade-up" style="animation-delay:' + (i * 40) + 'ms">' +
+      '<span class="act-emoji">' + a.emoji + '</span>' +
+      '<div class="act-cat">' + (CAT_LABELS[a.category] || a.category) + '</div>' +
+      '<div class="act-title">' + esc(a.title) + '</div>' +
+      '<div class="act-desc">' + esc(a.description) + '</div>' +
+      '<div style="margin-top:11px">' +
+        '<button class="save-btn ' + (a.saved ? 'on' : '') + '" data-type="activity" data-id="' + a.id + '" onclick="toggleSave(this)">' +
+          (a.saved ? '✦ Saved' : '+ Save') +
+        '</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+// ─── SAVE ─────────────────────────────────────────────────────────────────────
+async function toggleSave(btn) {
+  const type = btn.dataset.type;
+  const id   = btn.dataset.id;
+
+  // Look up data from Map — works for ALL titles including ones with quotes/special chars
+  const item = getItem(type, id);
+  if (!item) { showToast('Item data missing. Please refresh.', '#f87171'); return; }
+
+  btn.disabled = true;  // Prevent double-clicks
+
+  try {
+    const r = await fetch('/api/v1/save', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_type: type,
+        item_id:   id,
+        title:     item.title    || '',
+        subtitle:  item.subtitle || '',
+        image:     item.image    || '',
+        url:       item.url      || '',
+      }),
+    });
+
+    if (r.status === 401) {
+      showToast('Session expired — redirecting to login…', '#f87171');
+      setTimeout(() => window.location.href = '/login', 1500);
+      return;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+
+    const d = await r.json();
+    if (d.saved) {
+      btn.textContent = '✦ Saved';
+      btn.classList.add('on');
+      showToast('Saved to your collection ✦', 'rgba(244,114,182,0.4)');
+    } else {
+      btn.textContent = '+ Save';
+      btn.classList.remove('on');
+      showToast('Removed from collection');
+    }
+  } catch (e) {
+    console.error('Save error:', e);
+    showToast('Save failed. Please try again.', '#f87171');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ─── TEST TMDB KEY ────────────────────────────────────────────────────────────
+async function testTmdbKey() {
+  const btn = document.getElementById('tmdb-test-btn');
+  const res = document.getElementById('tmdb-test-result');
+  if (!btn) return;
+  btn.textContent = 'Testing…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/v1/test-tmdb');
+    const d = await r.json();
+    if (d.ok) {
+      if (res) res.innerHTML = '<span style="color:#34d399">✓ Key works! Restart app.py to load it.</span>';
+      btn.textContent = '✓ Key verified';
+      btn.style.background = '#34d399';
+    } else {
+      if (res) res.innerHTML = '<span style="color:#f87171">✗ ' + (d.error || 'Invalid key') + '</span>';
+      btn.textContent = 'Test my TMDB key';
+      btn.disabled = false;
+    }
+  } catch (e) {
+    if (res) res.innerHTML = '<span style="color:#f87171">Request failed</span>';
+    btn.textContent = 'Test my TMDB key';
+    btn.disabled = false;
+  }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+{% endblock %}

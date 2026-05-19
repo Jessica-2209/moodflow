@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}MoodFlow{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#09090f;--bg2:#111118;--card:#16161f;--card2:#1e1e2c;
+      --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+      --a1:#c084fc;--a2:#f472b6;--a3:#38bdf8;--a4:#34d399;
+      --text:#ebebf5;--muted:#7777a0;--radius:14px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+    a{color:inherit;text-decoration:none;}
+    img{display:block;}
+
+    nav{display:flex;align-items:center;justify-content:space-between;padding:15px 36px;border-bottom:1px solid var(--border);background:rgba(9,9,15,0.92);backdrop-filter:blur(16px);position:sticky;top:0;z-index:300;}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .nav-links{display:flex;gap:8px;align-items:center;}
+    .nbtn{padding:8px 18px;border-radius:30px;font-size:0.83rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;border:1px solid var(--border);background:transparent;color:var(--text);}
+    .nbtn:hover{background:var(--card2);border-color:var(--border2);}
+    .nbtn.p{background:linear-gradient(135deg,var(--a1),var(--a2));border:none;color:#fff;font-weight:600;}
+    .nbtn.p:hover{opacity:.85;transform:translateY(-1px);}
+
+    #toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--card2);border:1px solid var(--border2);padding:12px 20px;border-radius:12px;font-size:0.85rem;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;box-shadow:0 8px 28px rgba(0,0,0,0.4);}
+    #toast.show{opacity:1;transform:translateY(0);}
+
+    .fade-up{animation:fadeUp 0.4s ease both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">✦ MoodFlow</a>
+  <div class="nav-links">
+    {% if current_user.is_authenticated %}
+      <a href="/mood" class="nbtn">Explore</a>
+      <a href="/saved" class="nbtn">Saved ✦</a>
+      <a href="/api/v1/status" class="nbtn" target="_blank">API</a>
+      <a href="/logout" class="nbtn p">Logout</a>
+    {% else %}
+      <a href="/login" class="nbtn">Login</a>
+      <a href="/register" class="nbtn p">Get Started</a>
+    {% endif %}
+  </div>
+</nav>
+{% block content %}{% endblock %}
+<div id="toast"></div>
+<script>
+  function showToast(msg,accent){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.style.borderColor=accent||'rgba(255,255,255,0.1)';
+    t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);
+  }
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
